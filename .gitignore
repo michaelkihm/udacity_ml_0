@@ -5,3 +5,6 @@
 
 # ignore logs
 logs
+
+# IDE settings
+.vscode
