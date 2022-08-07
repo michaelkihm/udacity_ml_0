@@ -1,10 +1,39 @@
 # library doc string
 
 
-# import libraries
 import os
 
+import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
+
+sns.set()
+CAT_COLUMNS = [
+    "Gender",
+    "Education_Level",
+    "Marital_Status",
+    "Income_Category",
+    "Card_Category",
+]
+
+QUANT_COLUMNS = [
+    "Customer_Age",
+    "Dependent_count",
+    "Months_on_book",
+    "Total_Relationship_Count",
+    "Months_Inactive_12_mon",
+    "Contacts_Count_12_mon",
+    "Credit_Limit",
+    "Total_Revolving_Bal",
+    "Avg_Open_To_Buy",
+    "Total_Amt_Chng_Q4_Q1",
+    "Total_Trans_Amt",
+    "Total_Trans_Ct",
+    "Total_Ct_Chng_Q4_Q1",
+    "Avg_Utilization_Ratio",
+]
+
+FIGURE_SIZE = (20, 10)
 
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
@@ -28,9 +57,46 @@ def perform_eda(df):
                 df: pandas dataframe
 
         output:
-                None
+                df: processed dataframe with appended Churn column
         """
-    pass
+    required_cols = QUANT_COLUMNS + CAT_COLUMNS
+    assert len(set(required_cols).intersection(set(df.columns))) == len(
+        required_cols
+    ), "Dataset misses one or more required columns"
+
+    CHURN_COL_NAME = "Churn"
+
+    # Compute churn column
+    df[CHURN_COL_NAME] = df["Attrition_Flag"].apply(
+        lambda val: 0 if val == "Existing Customer" else 1
+    )
+
+    # Save churn histogram
+    plt.figure(figsize=FIGURE_SIZE)
+    df[CHURN_COL_NAME].hist()
+    plt.savefig(fname="./images/eda/churn_histogram.png")
+
+    # Save Cutomer_Age histogram
+    plt.figure(figsize=FIGURE_SIZE)
+    df["Customer_Age"].hist()
+    plt.savefig(fname="./images/eda/customer_age_histogram.png")
+
+    # Save Marital_Status histogram
+    plt.figure(figsize=FIGURE_SIZE)
+    df.Marital_Status.value_counts("normalize").plot(kind="bar")
+    plt.savefig(fname="./images/eda/marital_status_histogram.png")
+
+    # save histogram and density distribution of Total_Transaction
+    plt.figure(figsize=FIGURE_SIZE)
+    sns.histplot(df["Total_Trans_Ct"], kde=True)
+    plt.savefig(fname="./images/eda/total_transaction_distribution.png")
+
+    # Save heatmap
+    plt.figure(figsize=FIGURE_SIZE)
+    sns.heatmap(df.corr(), annot=False, cmap="Dark2_r", linewidths=2)
+    plt.savefig(fname="./images/eda/heatmap.png")
+
+    return df
 
 
 def encoder_helper(df, category_lst, response):
@@ -117,3 +183,8 @@ def train_models(X_train, X_test, y_train, y_test):
               None
     """
     pass
+
+
+if __name__ == "__main__":
+    DATASET = import_data("./data/bank_data.csv")
+    EDA_DF = perform_eda(DATASET)
