@@ -8,3 +8,6 @@ logs
 
 # IDE settings
 .vscode
+
+# Image directory
+images
