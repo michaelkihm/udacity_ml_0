@@ -2,7 +2,7 @@ import logging
 
 import pandas as pd
 import pytest
-from mock import call, patch
+from mock import ANY, call, patch
 
 from churn_library import (
     CATEGORY_COLUMNS,
@@ -10,6 +10,7 @@ from churn_library import (
     import_data,
     perform_eda,
     perform_feature_engineering,
+    train_models,
 )
 
 logging.basicConfig(
@@ -132,12 +133,70 @@ def test_perform_feature_engineering():
     logging.info("Test perform_feature_engineering: SUCCESS")
 
 
-@pytest.mark.skip(reason="Not implemented")
-def test_train_models():
+@patch("churn_library.plt.savefig")
+@patch("churn_library.joblib.dump")
+def test_train_models(save_model_mock, save_fig_mock):
     """
     test train_models
     """
-    pass
+    # Arrange testdata and only use first 100 data samples to
+    # reduce test time
+    dataframe = arrange_testdata()
+    dataframe = dataframe.head(100)
+    X_train, X_test, y_train, y_test = perform_feature_engineering(dataframe)
+
+    # Act
+    train_models(X_train, X_test, y_train, y_test)
+
+    # Test if roc curve was saved
+    try:
+        expected_call = call(fname="./images/results/roc_curve.png")
+        assert expected_call in save_fig_mock.call_args_list
+    except AssertionError as err:
+        logging.error("Test train_models: Did not save roc_curve")
+        raise err
+
+    # Test if feature importance plot was saved
+    try:
+        expected_call = call(fname="./images/results/feature_importance_plot.png")
+        assert expected_call in save_fig_mock.call_args_list
+    except AssertionError as err:
+        logging.error("Test train_models: Did not save feature_importance_plot")
+        raise err
+
+    # Test if random forest result was saved
+    try:
+        expected_call = call(fname="./images/results/RandomForest_results.png")
+        assert expected_call in save_fig_mock.call_args_list
+    except AssertionError as err:
+        logging.error("Test train_models: Did not save RandomForest_results.png")
+        raise err
+
+    # Test if logistic regression result was saved
+    try:
+        expected_call = call(fname="./images/results/LogisticRegression_results.png")
+        assert expected_call in save_fig_mock.call_args_list
+    except AssertionError as err:
+        logging.error("Test train_models: Did not save LogisticRegression_results.png")
+        raise err
+
+    # Test if random forest model was saved
+    try:
+        expected_call = call(ANY, "./models/rfc_model.pkl")
+        assert expected_call in save_model_mock.call_args_list
+    except AssertionError as err:
+        logging.error("Test train_models: Did not save random forest model")
+        raise err
+
+    # Test if regression model was saved
+    try:
+        expected_call = call(ANY, "./models/logistic_model.pkl")
+        assert expected_call in save_model_mock.call_args_list
+    except AssertionError as err:
+        logging.error("Test train_models: Did not save logistic regression model")
+        raise err
+
+    logging.info("Test train_models: SUCCESS")
 
 
 if __name__ == "__main__":
@@ -145,3 +204,4 @@ if __name__ == "__main__":
     test_eda()
     test_encoder_helper()
     test_perform_feature_engineering()
+    test_train_models()
