@@ -160,10 +160,12 @@ def test_train_models(save_model_mock, save_fig_mock):
 
     # Test if feature importance plot was saved
     try:
-        expected_call = call(fname="./images/results/feature_importance_plot.png")
+        expected_call = call(
+            fname="./images/results/feature_importance_plot.png")
         assert expected_call in save_fig_mock.call_args_list
     except AssertionError as err:
-        logging.error("Test train_models: Did not save feature_importance_plot")
+        logging.error(
+            "Test train_models: Did not save feature_importance_plot")
         raise err
 
     # Test if random forest result was saved
@@ -171,15 +173,18 @@ def test_train_models(save_model_mock, save_fig_mock):
         expected_call = call(fname="./images/results/RandomForest_results.png")
         assert expected_call in save_fig_mock.call_args_list
     except AssertionError as err:
-        logging.error("Test train_models: Did not save RandomForest_results.png")
+        logging.error(
+            "Test train_models: Did not save RandomForest_results.png")
         raise err
 
     # Test if logistic regression result was saved
     try:
-        expected_call = call(fname="./images/results/LogisticRegression_results.png")
+        expected_call = call(
+            fname="./images/results/LogisticRegression_results.png")
         assert expected_call in save_fig_mock.call_args_list
     except AssertionError as err:
-        logging.error("Test train_models: Did not save LogisticRegression_results.png")
+        logging.error(
+            "Test train_models: Did not save LogisticRegression_results.png")
         raise err
 
     # Test if random forest model was saved
@@ -195,7 +200,8 @@ def test_train_models(save_model_mock, save_fig_mock):
         expected_call = call(ANY, "./models/logistic_model.pkl")
         assert expected_call in save_model_mock.call_args_list
     except AssertionError as err:
-        logging.error("Test train_models: Did not save logistic regression model")
+        logging.error(
+            "Test train_models: Did not save logistic regression model")
         raise err
 
     logging.info("Test train_models: SUCCESS")

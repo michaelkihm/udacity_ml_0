@@ -241,7 +241,11 @@ def classification_report_image(
 
     # Logistic Regression report
     save_classification_report(
-        y_train, y_test, y_train_preds_lr, y_test_preds_lr, "LogisticRegression",
+        y_train,
+        y_test,
+        y_train_preds_lr,
+        y_test_preds_lr,
+        "LogisticRegression",
     )
 
 
@@ -313,7 +317,12 @@ def train_models(x_train, x_test, y_train, y_test):
     plt.figure(figsize=FIGURE_SIZE)
     axis = plt.gca()
     plot_roc_curve(lrc, x_test, y_test, ax=axis, alpha=alpha)
-    plot_roc_curve(cv_rfc.best_estimator_, x_test, y_test, ax=axis, alpha=alpha)
+    plot_roc_curve(
+        cv_rfc.best_estimator_,
+        x_test,
+        y_test,
+        ax=axis,
+        alpha=alpha)
     plt.savefig(fname="./images/results/roc_curve.png")
 
     # save best models and
