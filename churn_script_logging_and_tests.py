@@ -6,13 +6,13 @@ import pytest
 from mock import ANY, call, patch
 
 from churn_library import (
-    CATEGORY_COLUMNS,
     encoder_helper,
     import_data,
     perform_eda,
     perform_feature_engineering,
     train_models,
 )
+from constants import CATEGORY_COLUMNS
 
 logging.basicConfig(
     filename="./logs/churn_library.log",

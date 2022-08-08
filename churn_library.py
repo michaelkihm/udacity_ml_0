@@ -19,34 +19,10 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, plot_roc_curve
 from sklearn.model_selection import GridSearchCV, train_test_split
 
+from constants import CATEGORY_COLUMNS, CHURN_COL_NAME, FIGURE_SIZE, QUANT_COLUMNS
+
 sns.set()
-CATEGORY_COLUMNS = [
-    "Gender",
-    "Education_Level",
-    "Marital_Status",
-    "Income_Category",
-    "Card_Category",
-]
 
-QUANT_COLUMNS = [
-    "Customer_Age",
-    "Dependent_count",
-    "Months_on_book",
-    "Total_Relationship_Count",
-    "Months_Inactive_12_mon",
-    "Contacts_Count_12_mon",
-    "Credit_Limit",
-    "Total_Revolving_Bal",
-    "Avg_Open_To_Buy",
-    "Total_Amt_Chng_Q4_Q1",
-    "Total_Trans_Amt",
-    "Total_Trans_Ct",
-    "Total_Ct_Chng_Q4_Q1",
-    "Avg_Utilization_Ratio",
-]
-
-FIGURE_SIZE = (20, 10)
-CHURN_COL_NAME = "Churn"
 
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
@@ -241,11 +217,7 @@ def classification_report_image(
 
     # Logistic Regression report
     save_classification_report(
-        y_train,
-        y_test,
-        y_train_preds_lr,
-        y_test_preds_lr,
-        "LogisticRegression",
+        y_train, y_test, y_train_preds_lr, y_test_preds_lr, "LogisticRegression",
     )
 
 
@@ -317,12 +289,7 @@ def train_models(x_train, x_test, y_train, y_test):
     plt.figure(figsize=FIGURE_SIZE)
     axis = plt.gca()
     plot_roc_curve(lrc, x_test, y_test, ax=axis, alpha=alpha)
-    plot_roc_curve(
-        cv_rfc.best_estimator_,
-        x_test,
-        y_test,
-        ax=axis,
-        alpha=alpha)
+    plot_roc_curve(cv_rfc.best_estimator_, x_test, y_test, ax=axis, alpha=alpha)
     plt.savefig(fname="./images/results/roc_curve.png")
 
     # save best models and
