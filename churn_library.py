@@ -58,91 +58,91 @@ def import_data(pth):
     input:
             pth: a path to the csv
     output:
-            df: pandas dataframe
+            dataframe: pandas dataframe
     """
     return pd.read_csv(pth)
 
 
-def perform_eda(df):
+def perform_eda(dataframe):
     """
-        perform eda on df and save figures to images folder
+        perform eda on dataframe and save figures to images folder
         input:
-                df: pandas dataframe
+                dataframe: pandas dataframe
 
         output:
-                df: processed dataframe with appended Churn column
+                dataframe: processed dataframe with appended Churn column
         """
     required_cols = QUANT_COLUMNS + CATEGORY_COLUMNS
-    assert len(set(required_cols).intersection(set(df.columns))) == len(
+    assert len(set(required_cols).intersection(set(dataframe.columns))) == len(
         required_cols
     ), "Dataset misses one or more required columns"
 
     # Compute churn column
-    df[CHURN_COL_NAME] = df["Attrition_Flag"].apply(
+    dataframe[CHURN_COL_NAME] = dataframe["Attrition_Flag"].apply(
         lambda val: 0 if val == "Existing Customer" else 1
     )
 
     # Save churn histogram
     plt.figure(figsize=FIGURE_SIZE)
-    df[CHURN_COL_NAME].hist()
+    dataframe[CHURN_COL_NAME].hist()
     plt.savefig(fname="./images/eda/churn_histogram.png")
 
     # Save Cutomer_Age histogram
     plt.figure(figsize=FIGURE_SIZE)
-    df["Customer_Age"].hist()
+    dataframe["Customer_Age"].hist()
     plt.savefig(fname="./images/eda/customer_age_histogram.png")
 
     # Save Marital_Status histogram
     plt.figure(figsize=FIGURE_SIZE)
-    df.Marital_Status.value_counts("normalize").plot(kind="bar")
+    dataframe.Marital_Status.value_counts("normalize").plot(kind="bar")
     plt.savefig(fname="./images/eda/marital_status_histogram.png")
 
     # save histogram and density distribution of Total_Transaction
     plt.figure(figsize=FIGURE_SIZE)
-    sns.histplot(df["Total_Trans_Ct"], kde=True)
+    sns.histplot(dataframe["Total_Trans_Ct"], kde=True)
     plt.savefig(fname="./images/eda/total_transaction_distribution.png")
 
     # Save heatmap
     plt.figure(figsize=FIGURE_SIZE)
-    sns.heatmap(df.corr(), annot=False, cmap="Dark2_r", linewidths=2)
+    sns.heatmap(dataframe.corr(), annot=False, cmap="Dark2_r", linewidths=2)
     plt.savefig(fname="./images/eda/heatmap.png")
 
-    return df
+    return dataframe
 
 
-def encoder_helper(df, category_lst, response="Churn"):
+def encoder_helper(dataframe, category_lst, response="Churn"):
     """
     helper function to turn each categorical column into a new column with
     propotion of churn for each category - associated with cell 15 from the
     notebook
 
     input:
-            df: pandas dataframe
+            dataframe: pandas dataframe
             category_lst: list of columns that contain categorical features
             response: string of response name [optional argument that could
             be used for naming variables or index y column]
 
     output:
-            encoded_df: pandas dataframe with new columns for
+            encoded_dataframe: pandas dataframe with new columns for
             categorical columns from param category_lst
     """
-    encoded_df = df.copy(deep=True)
+    encoded_dataframe = dataframe.copy(deep=True)
 
     for category in category_lst:
 
-        column_groups = df.groupby(category).mean()[CHURN_COL_NAME]
-        column_list = [column_groups.loc[val] for val in df[category]]
+        column_groups = dataframe.groupby(category).mean()[CHURN_COL_NAME]
+        column_list = [column_groups.loc[val] for val in dataframe[category]]
 
         column_name = f"{category}_{response}" if response else category
-        encoded_df[column_name] = column_list
+        encoded_dataframe[column_name] = column_list
 
-    return encoded_df
+    return encoded_dataframe
 
 
-def perform_feature_engineering(df, response="Churn"):
+def perform_feature_engineering(dataframe, response="Churn"):
     """
     input:
-              df: pandas dataframe
+              dataframe: pandas dataframe
               response: string of response name [optional argument that could
               be used for naming variables or index y column]
 
@@ -153,13 +153,13 @@ def perform_feature_engineering(df, response="Churn"):
               y_test: y testing data
     """
     test_set_size = 0.3
-    encoded_df = encoder_helper(df, CATEGORY_COLUMNS, response)
+    encoded_dataframe = encoder_helper(dataframe, CATEGORY_COLUMNS, response)
 
     # get target variable
-    y = encoded_df["Churn"]
+    target_y = encoded_dataframe["Churn"]
 
     # create dataset X
-    X = pd.DataFrame()
+    dataset = pd.DataFrame()
     keep_cols = [
         "Customer_Age",
         "Dependent_count",
@@ -181,19 +181,20 @@ def perform_feature_engineering(df, response="Churn"):
         "Income_Category_Churn",
         "Card_Category_Churn",
     ]
-    X[keep_cols] = encoded_df[keep_cols]
+    dataset[keep_cols] = encoded_dataframe[keep_cols]
 
     # split dataset
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=test_set_size, random_state=42
+    x_train, x_test, y_train, y_test = train_test_split(
+        dataset, target_y, test_size=test_set_size, random_state=42
     )
 
-    return X_train, X_test, y_train, y_test
+    return x_train, x_test, y_train, y_test
 
 
 def save_classification_report(
     y_train, y_test, y_train_preds, y_test_preds, clf_name,
 ):
+    """Helper function to save classification report"""
     x_pos = 0.01
     fontdict = {"fontsize": 10, "fontproperties": "monospace"}
     test_report = str(classification_report(y_test, y_test_preds))
@@ -244,7 +245,7 @@ def classification_report_image(
     )
 
 
-def feature_importance_plot(model, X_data, output_pth):
+def feature_importance_plot(model, x_data, output_pth):
     """
     creates and stores the feature importances in pth
     input:
@@ -260,20 +261,20 @@ def feature_importance_plot(model, X_data, output_pth):
     # sort feature importances in descending order
     indices = np.argsort(importances)[::-1]
     # rearrange feature names so they match the sorted feature importances
-    names = [X_data.columns[i] for i in indices]
+    names = [x_data.columns[i] for i in indices]
 
     # create plot
     plt.figure(figsize=FIGURE_SIZE)
     plt.title("Feature Importance")
     plt.ylabel("Importance")
-    plt.bar(range(X_data.shape[1]), importances[indices])
-    plt.xticks(range(X_data.shape[1]), names, rotation=90)
+    plt.bar(range(x_data.shape[1]), importances[indices])
+    plt.xticks(range(x_data.shape[1]), names, rotation=90)
 
     # save plot
     plt.savefig(fname=os.path.join(output_pth, "feature_importance_plot.png"))
 
 
-def train_models(X_train, X_test, y_train, y_test):
+def train_models(x_train, x_test, y_train, y_test):
     """
     train, store model results: images + scores, and store models
     input:
@@ -298,21 +299,21 @@ def train_models(X_train, X_test, y_train, y_test):
 
     # grid search for training of RandomForest
     cv_rfc = GridSearchCV(estimator=rfc, param_grid=param_grid, cv=5)
-    cv_rfc.fit(X_train, y_train)
-    lrc.fit(X_train, y_train)
+    cv_rfc.fit(x_train, y_train)
+    lrc.fit(x_train, y_train)
 
     # validate models
-    y_train_preds_rf = cv_rfc.best_estimator_.predict(X_train)
-    y_test_preds_rf = cv_rfc.best_estimator_.predict(X_test)
-    y_train_preds_lr = lrc.predict(X_train)
-    y_test_preds_lr = lrc.predict(X_test)
+    y_train_preds_rf = cv_rfc.best_estimator_.predict(x_train)
+    y_test_preds_rf = cv_rfc.best_estimator_.predict(x_test)
+    y_train_preds_lr = lrc.predict(x_train)
+    y_test_preds_lr = lrc.predict(x_test)
 
     # plot and save roc curves
     alpha = 0.8
     plt.figure(figsize=FIGURE_SIZE)
-    ax = plt.gca()
-    plot_roc_curve(lrc, X_test, y_test, ax=ax, alpha=alpha)
-    plot_roc_curve(cv_rfc.best_estimator_, X_test, y_test, ax=ax, alpha=alpha)
+    axis = plt.gca()
+    plot_roc_curve(lrc, x_test, y_test, ax=axis, alpha=alpha)
+    plot_roc_curve(cv_rfc.best_estimator_, x_test, y_test, ax=axis, alpha=alpha)
     plt.savefig(fname="./images/results/roc_curve.png")
 
     # save best models and
@@ -328,12 +329,12 @@ def train_models(X_train, X_test, y_train, y_test):
         y_test_preds_lr,
         y_test_preds_rf,
     )
-    feature_importance_plot(cv_rfc, X_test, "./images/results")
+    feature_importance_plot(cv_rfc, x_test, "./images/results")
 
 
 if __name__ == "__main__":
     DATASET = import_data("./data/bank_data.csv")
     EDA_DF = perform_eda(DATASET)
 
-    X_train, X_test, y_train, y_test = perform_feature_engineering(EDA_DF)
-    train_models(X_train, X_test, y_train, y_test)
+    X_TRAIN, X_TEST, Y_TRAIN, Y_TEST = perform_feature_engineering(EDA_DF)
+    train_models(X_TRAIN, X_TEST, Y_TRAIN, Y_TEST)

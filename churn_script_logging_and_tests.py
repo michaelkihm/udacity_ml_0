@@ -1,3 +1,4 @@
+""" Unit tests of churn library functions """
 import logging
 
 import pandas as pd
@@ -27,15 +28,15 @@ def test_import():
     assist with the other test functions
     """
     try:
-        df = import_data("./data/bank_data.csv")
+        dataframe = import_data("./data/bank_data.csv")
         logging.info("Test import_data: SUCCESS")
     except FileNotFoundError as err:
         logging.error("Test import_eda: The file wasn't found")
         raise err
 
     try:
-        assert df.shape[0] > 0
-        assert df.shape[1] > 0
+        assert dataframe.shape[0] > 0
+        assert dataframe.shape[1] > 0
     except AssertionError as err:
         err_msg = "Test import_data: File doesn't  have rows and columns"
         logging.error(err_msg)
@@ -43,6 +44,7 @@ def test_import():
 
 
 def arrange_testdata():
+    """Load testdata so that it can be used in the following unit tests"""
     dataframe = pd.read_csv("./data/bank_data.csv")
     dataframe["Churn"] = dataframe["Attrition_Flag"].apply(
         lambda val: 0 if val == "Existing Customer" else 1
@@ -55,7 +57,7 @@ def test_eda(save_fig_mock):
     """
     test perform eda function
     """
-    df = pd.read_csv("./data/bank_data.csv")
+    dataframe = pd.read_csv("./data/bank_data.csv")
     expected_save_calls = [
         call(fname="./images/eda/churn_histogram.png"),
         call(fname="./images/eda/customer_age_histogram.png"),
@@ -64,11 +66,11 @@ def test_eda(save_fig_mock):
         call(fname="./images/eda/heatmap.png"),
     ]
     try:
-        perform_eda(df)
+        perform_eda(dataframe)
         logging.info("Test perform_eda: SUCCESS")
         assert save_fig_mock.mock_calls == expected_save_calls
     except AssertionError as err:
-        logging.error(f"Test perform_eda: Not all plots saved to disk {err}")
+        logging.error("Test perform_eda: Not all plots saved to disk %s", err)
         raise err
 
 
@@ -114,16 +116,16 @@ def test_perform_feature_engineering():
 
     # Test if datasets X are corresponding to targets y
     try:
-        X_train, X_test, y_train, y_test = perform_feature_engineering(data)
-        assert len(X_test) == len(y_test) and len(X_train) == len(y_train)
+        x_train, x_test, y_train, y_test = perform_feature_engineering(data)
+        assert len(x_test) == len(y_test) and len(x_train) == len(y_train)
     except AssertionError as err:
         logging.error("Test perform_feature_engineering: Wrong dataset sizes")
         raise err
 
     # Test if X_test is 30% of whole dataset
     try:
-        X_train, X_test, y_train, y_test = perform_feature_engineering(data)
-        assert len(X_test) == pytest.approx(len(data) * 0.3, 2)
+        x_train, x_test, y_train, y_test = perform_feature_engineering(data)
+        assert len(x_test) == pytest.approx(len(data) * 0.3, 2)
     except AssertionError as err:
         logging.error(
             "Test perform_feature_engineering: Test set should be 30 percent of whole dataset"
@@ -143,10 +145,10 @@ def test_train_models(save_model_mock, save_fig_mock):
     # reduce test time
     dataframe = arrange_testdata()
     dataframe = dataframe.head(100)
-    X_train, X_test, y_train, y_test = perform_feature_engineering(dataframe)
+    x_train, x_test, y_train, y_test = perform_feature_engineering(dataframe)
 
     # Act
-    train_models(X_train, X_test, y_train, y_test)
+    train_models(x_train, x_test, y_train, y_test)
 
     # Test if roc curve was saved
     try:
