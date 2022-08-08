@@ -8,7 +8,7 @@ import pandas as pd
 import seaborn as sns
 
 sns.set()
-CAT_COLUMNS = [
+CATEGORY_COLUMNS = [
     "Gender",
     "Education_Level",
     "Marital_Status",
@@ -34,6 +34,7 @@ QUANT_COLUMNS = [
 ]
 
 FIGURE_SIZE = (20, 10)
+CHURN_COL_NAME = "Churn"
 
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
@@ -59,12 +60,10 @@ def perform_eda(df):
         output:
                 df: processed dataframe with appended Churn column
         """
-    required_cols = QUANT_COLUMNS + CAT_COLUMNS
+    required_cols = QUANT_COLUMNS + CATEGORY_COLUMNS
     assert len(set(required_cols).intersection(set(df.columns))) == len(
         required_cols
     ), "Dataset misses one or more required columns"
-
-    CHURN_COL_NAME = "Churn"
 
     # Compute churn column
     df[CHURN_COL_NAME] = df["Attrition_Flag"].apply(
@@ -99,7 +98,7 @@ def perform_eda(df):
     return df
 
 
-def encoder_helper(df, category_lst, response):
+def encoder_helper(df, category_lst, response="Churn"):
     """
     helper function to turn each categorical column into a new column with
     propotion of churn for each category - associated with cell 15 from the
@@ -112,9 +111,20 @@ def encoder_helper(df, category_lst, response):
             be used for naming variables or index y column]
 
     output:
-            df: pandas dataframe with new columns for
+            encoded_df: pandas dataframe with new columns for
+            categorical columns from param category_lst
     """
-    pass
+    encoded_df = df.copy(deep=True)
+
+    for category in category_lst:
+
+        column_groups = df.groupby(category).mean()[CHURN_COL_NAME]
+        column_list = [column_groups.loc[val] for val in df[category]]
+
+        column_name = f"{category}_{response}" if response else category
+        encoded_df[column_name] = column_list
+
+    return encoded_df
 
 
 def perform_feature_engineering(df, response):

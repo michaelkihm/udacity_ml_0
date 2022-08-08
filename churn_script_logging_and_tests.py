@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 from mock import call, patch
 
-from churn_library import import_data, perform_eda
+from churn_library import CATEGORY_COLUMNS, encoder_helper, import_data, perform_eda
 
 logging.basicConfig(
     filename="./logs/churn_library.log",
@@ -57,12 +57,42 @@ def test_eda(save_fig_mock):
         raise err
 
 
-@pytest.mark.skip(reason="Not implemented")
 def test_encoder_helper():
     """
     test encoder helper
     """
-    pass
+
+    # Arrange testdata
+    dataframe = pd.read_csv("./data/bank_data.csv")
+    dataframe["Churn"] = dataframe["Attrition_Flag"].apply(
+        lambda val: 0 if val == "Existing Customer" else 1
+    )
+
+    try:
+        encoded_df = encoder_helper(dataframe, [])
+        assert encoded_df.equals(dataframe)
+        logging.info("Test encoder_helper: Not manipulates df if category_lst is empty")
+    except AssertionError as err:
+        logging.error(
+            "Test encoder_helper: Should not manipulate df if category_lst is empty"
+        )
+        raise err
+
+    try:
+        encoded_df = encoder_helper(dataframe, CATEGORY_COLUMNS)
+        expected_cols = [f"{cat}_Churn" for cat in CATEGORY_COLUMNS]
+        common_cols = set(encoded_df.columns).intersection(set(expected_cols))
+        assert len(common_cols) == len(expected_cols)
+        logging.info(
+            "Test encoder_helper: turns each categorical column into a new column"
+        )
+    except AssertionError as err:
+        logging.error(
+            "Test encoder_helper: Should turn each categorical column into a new column"
+        )
+        raise err
+
+    logging.info("Testing encoder_helper: SUCCESS")
 
 
 @pytest.mark.skip(reason="Not implemented")
@@ -84,3 +114,4 @@ def test_train_models():
 if __name__ == "__main__":
     test_import()
     test_eda()
+    test_encoder_helper()
