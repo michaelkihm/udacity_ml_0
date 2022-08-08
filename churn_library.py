@@ -4,6 +4,7 @@
  Implements code from notebook churn_notebook in a more modular form.
 
  Author: Michael Kihm
+ Creation Date: 8 August 2022
 """
 
 

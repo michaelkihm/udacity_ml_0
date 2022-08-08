@@ -1,4 +1,8 @@
-""" Unit tests of churn library functions """
+""" Unit tests of churn library functions
+
+Author: Michael Kihm
+Creation Date: 8 August 2022
+"""
 import logging
 
 import pandas as pd

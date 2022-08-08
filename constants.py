@@ -1,3 +1,9 @@
+"""
+Constants shared between library functions
+
+Author: Michael Kihm
+ Creation Date: 8 August 2022
+"""
 CATEGORY_COLUMNS = [
     "Gender",
     "Education_Level",
