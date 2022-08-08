@@ -6,6 +6,7 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+from sklearn.model_selection import train_test_split
 
 sns.set()
 CATEGORY_COLUMNS = [
@@ -127,7 +128,7 @@ def encoder_helper(df, category_lst, response="Churn"):
     return encoded_df
 
 
-def perform_feature_engineering(df, response):
+def perform_feature_engineering(df, response="Churn"):
     """
     input:
               df: pandas dataframe
@@ -140,6 +141,43 @@ def perform_feature_engineering(df, response):
               y_train: y training data
               y_test: y testing data
     """
+    test_set_size = 0.3
+    encoded_df = encoder_helper(df, CATEGORY_COLUMNS, response)
+
+    # get target variable
+    y = encoded_df["Churn"]
+
+    # create dataset X
+    X = pd.DataFrame()
+    keep_cols = [
+        "Customer_Age",
+        "Dependent_count",
+        "Months_on_book",
+        "Total_Relationship_Count",
+        "Months_Inactive_12_mon",
+        "Contacts_Count_12_mon",
+        "Credit_Limit",
+        "Total_Revolving_Bal",
+        "Avg_Open_To_Buy",
+        "Total_Amt_Chng_Q4_Q1",
+        "Total_Trans_Amt",
+        "Total_Trans_Ct",
+        "Total_Ct_Chng_Q4_Q1",
+        "Avg_Utilization_Ratio",
+        "Gender_Churn",
+        "Education_Level_Churn",
+        "Marital_Status_Churn",
+        "Income_Category_Churn",
+        "Card_Category_Churn",
+    ]
+    X[keep_cols] = encoded_df[keep_cols]
+
+    # split dataset
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=test_set_size, random_state=42
+    )
+
+    return X_train, X_test, y_train, y_test
 
 
 def classification_report_image(
@@ -198,3 +236,5 @@ def train_models(X_train, X_test, y_train, y_test):
 if __name__ == "__main__":
     DATASET = import_data("./data/bank_data.csv")
     EDA_DF = perform_eda(DATASET)
+
+    X_train, X_test, y_train, y_test = perform_feature_engineering(EDA_DF)

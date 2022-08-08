@@ -4,7 +4,13 @@ import pandas as pd
 import pytest
 from mock import call, patch
 
-from churn_library import CATEGORY_COLUMNS, encoder_helper, import_data, perform_eda
+from churn_library import (
+    CATEGORY_COLUMNS,
+    encoder_helper,
+    import_data,
+    perform_eda,
+    perform_feature_engineering,
+)
 
 logging.basicConfig(
     filename="./logs/churn_library.log",
@@ -21,9 +27,9 @@ def test_import():
     """
     try:
         df = import_data("./data/bank_data.csv")
-        logging.info("Testing import_data: SUCCESS")
+        logging.info("Test import_data: SUCCESS")
     except FileNotFoundError as err:
-        logging.error("Testing import_eda: The file wasn't found")
+        logging.error("Test import_eda: The file wasn't found")
         raise err
 
     try:
@@ -33,6 +39,14 @@ def test_import():
         err_msg = "Test import_data: File doesn't  have rows and columns"
         logging.error(err_msg)
         raise err
+
+
+def arrange_testdata():
+    dataframe = pd.read_csv("./data/bank_data.csv")
+    dataframe["Churn"] = dataframe["Attrition_Flag"].apply(
+        lambda val: 0 if val == "Existing Customer" else 1
+    )
+    return dataframe
 
 
 @patch("churn_library.plt.savefig")
@@ -50,7 +64,7 @@ def test_eda(save_fig_mock):
     ]
     try:
         perform_eda(df)
-        logging.info("Testing perform_eda: SUCCESS")
+        logging.info("Test perform_eda: SUCCESS")
         assert save_fig_mock.mock_calls == expected_save_calls
     except AssertionError as err:
         logging.error(f"Test perform_eda: Not all plots saved to disk {err}")
@@ -63,44 +77,59 @@ def test_encoder_helper():
     """
 
     # Arrange testdata
-    dataframe = pd.read_csv("./data/bank_data.csv")
-    dataframe["Churn"] = dataframe["Attrition_Flag"].apply(
-        lambda val: 0 if val == "Existing Customer" else 1
-    )
+    dataframe = arrange_testdata()
 
+    # Test that encoder does not manipulate df if category_lst is empty
     try:
         encoded_df = encoder_helper(dataframe, [])
         assert encoded_df.equals(dataframe)
-        logging.info("Test encoder_helper: Not manipulates df if category_lst is empty")
     except AssertionError as err:
         logging.error(
             "Test encoder_helper: Should not manipulate df if category_lst is empty"
         )
         raise err
 
+    # Test if encoder turns each categorical column into a new column
     try:
         encoded_df = encoder_helper(dataframe, CATEGORY_COLUMNS)
         expected_cols = [f"{cat}_Churn" for cat in CATEGORY_COLUMNS]
         common_cols = set(encoded_df.columns).intersection(set(expected_cols))
         assert len(common_cols) == len(expected_cols)
-        logging.info(
-            "Test encoder_helper: turns each categorical column into a new column"
-        )
     except AssertionError as err:
         logging.error(
             "Test encoder_helper: Should turn each categorical column into a new column"
         )
         raise err
 
-    logging.info("Testing encoder_helper: SUCCESS")
+    logging.info("Test encoder_helper: SUCCESS")
 
 
-@pytest.mark.skip(reason="Not implemented")
 def test_perform_feature_engineering():
     """
     test perform_feature_engineering
     """
-    pass
+
+    data = arrange_testdata()
+
+    # Test if datasets X are corresponding to targets y
+    try:
+        X_train, X_test, y_train, y_test = perform_feature_engineering(data)
+        assert len(X_test) == len(y_test) and len(X_train) == len(y_train)
+    except AssertionError as err:
+        logging.error("Test perform_feature_engineering: Wrong dataset sizes")
+        raise err
+
+    # Test if X_test is 30% of whole dataset
+    try:
+        X_train, X_test, y_train, y_test = perform_feature_engineering(data)
+        assert len(X_test) == pytest.approx(len(data) * 0.3, 2)
+    except AssertionError as err:
+        logging.error(
+            "Test perform_feature_engineering: Test set should be 30 percent of whole dataset"
+        )
+        raise err
+
+    logging.info("Test perform_feature_engineering: SUCCESS")
 
 
 @pytest.mark.skip(reason="Not implemented")
@@ -115,3 +144,4 @@ if __name__ == "__main__":
     test_import()
     test_eda()
     test_encoder_helper()
+    test_perform_feature_engineering()
